@@ -24,7 +24,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.throttling import UserRateThrottle,AnonRateThrottle
 from .throttles import AuthTestScopedThrottle
 from django_filters.rest_framework import DjangoFilterBackend
-
+from rest_framework.filters import SearchFilter, OrderingFilter
 # -------------------- Simple Class APIview --------------------
 
 class StudentCRUDAPI(APIView):
@@ -279,16 +279,25 @@ class Authentication_test(viewsets.ModelViewSet):
     throttle_classes = [AuthTestScopedThrottle]
 
 
-# # -------------------- Django Filtering -------------------- 
+# ---------------------------------------- Django Filtering ---------------------------------------- 
 
 class Filter_StudentListAPI(generics.ListAPIView):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
+    # -------------------- Simple Filtering -------------------- 
     # def get_queryset(self):
     #     user = self.request.user
     #     if not user.is_authenticated:
     #         return Student.objects.filter(passby=None)
     #     return Student.objects.filter(passby=user)
-    filter_backends = [DjangoFilterBackend]
+
+    # -------------------- Django Filtering --------------------
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['name','passby']
+
+    # -------------------- Searching Filter --------------------
+    search_fields = ['^name', '=city']
+
+    # -------------------- Ordering Filter --------------------
+    ordering_fields = ['name','roll']
