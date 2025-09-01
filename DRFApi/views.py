@@ -25,6 +25,8 @@ from rest_framework.throttling import UserRateThrottle,AnonRateThrottle
 from .throttles import AuthTestScopedThrottle
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.pagination import PageNumberPagination
+from .paginations import MyPageNumberPagination
 # -------------------- Simple Class APIview --------------------
 
 class StudentCRUDAPI(APIView):
@@ -234,6 +236,18 @@ class StudentReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
 class Authentication_test(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
+
+
+    def create(self, request, *args, **kwargs):
+        # Check if data is a list (bulk create) or dict (single)
+        is_many = isinstance(request.data, list)
+
+        serializer = self.get_serializer(data=request.data, many=is_many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
 # -------------------- Basic Authenication -------------------- 
     # authentication_classes = [BasicAuthentication]
@@ -296,8 +310,14 @@ class Filter_StudentListAPI(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['name','passby']
 
-    # -------------------- Searching Filter --------------------
+    # -------------------- Searching Filter -------------------
     search_fields = ['^name', '=city']
 
     # -------------------- Ordering Filter --------------------
     ordering_fields = ['name','roll']
+
+    # -------------------- PageNumberPagination ----------------
+    # pagination_class = PageNumberPagination.  -- Global Pagination
+    pagination_class = MyPageNumberPagination
+
+
