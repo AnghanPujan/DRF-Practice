@@ -21,6 +21,9 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny, I
 from DRFApi.CustomPermission import CusPermissions
 from .CustomAuthentication import CustomAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.throttling import UserRateThrottle,AnonRateThrottle
+from .throttles import AuthTestScopedThrottle
+
 # -------------------- Simple Class APIview --------------------
 
 class StudentCRUDAPI(APIView):
@@ -263,5 +266,14 @@ class Authentication_test(viewsets.ModelViewSet):
 
 # -------------------- JWT Autthentication --------------------
 
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated] 
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated]
+
+
+# -------------------- JWT + Throtalling --------------------
+
+    authentication_classes = [JWTAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    # throttle_classes = [AnonRateThrottle, UserRateThrottle] # Default Throttels 
+    throttle_classes = [AuthTestScopedThrottle]
+     
