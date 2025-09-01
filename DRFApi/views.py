@@ -23,6 +23,7 @@ from .CustomAuthentication import CustomAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.throttling import UserRateThrottle,AnonRateThrottle
 from .throttles import AuthTestScopedThrottle
+from django_filters.rest_framework import DjangoFilterBackend
 
 # -------------------- Simple Class APIview --------------------
 
@@ -276,4 +277,18 @@ class Authentication_test(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     # throttle_classes = [AnonRateThrottle, UserRateThrottle] # Default Throttels 
     throttle_classes = [AuthTestScopedThrottle]
-     
+
+
+# # -------------------- Django Filtering -------------------- 
+
+class Filter_StudentListAPI(generics.ListAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     if not user.is_authenticated:
+    #         return Student.objects.filter(passby=None)
+    #     return Student.objects.filter(passby=user)
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name','passby']
