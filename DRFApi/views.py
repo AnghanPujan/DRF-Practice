@@ -21,6 +21,12 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny, I
 from DRFApi.CustomPermission import CusPermissions
 from .CustomAuthentication import CustomAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.throttling import UserRateThrottle,AnonRateThrottle
+from .throttles import AuthTestScopedThrottle
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.pagination import PageNumberPagination
+from .paginations import MyPageNumberPagination
 # -------------------- Simple Class APIview --------------------
 
 class StudentCRUDAPI(APIView):
@@ -230,6 +236,18 @@ class StudentReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
 class Authentication_test(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
+
+
+    def create(self, request, *args, **kwargs):
+        # Check if data is a list (bulk create) or dict (single)
+        is_many = isinstance(request.data, list)
+
+        serializer = self.get_serializer(data=request.data, many=is_many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
 # -------------------- Basic Authenication -------------------- 
     # authentication_classes = [BasicAuthentication]
@@ -263,5 +281,43 @@ class Authentication_test(viewsets.ModelViewSet):
 
 # -------------------- JWT Autthentication --------------------
 
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated] 
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated]
+
+
+# -------------------- JWT + Throtalling --------------------
+
+    authentication_classes = [JWTAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    # throttle_classes = [AnonRateThrottle, UserRateThrottle] # Default Throttels 
+    throttle_classes = [AuthTestScopedThrottle]
+
+
+# ---------------------------------------- Django Filtering ---------------------------------------- 
+
+class Filter_StudentListAPI(generics.ListAPIView):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+
+    # -------------------- Simple Filtering -------------------- 
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     if not user.is_authenticated:
+    #         return Student.objects.filter(passby=None)
+    #     return Student.objects.filter(passby=user)
+
+    # -------------------- Django Filtering --------------------
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['name','passby']
+
+    # -------------------- Searching Filter -------------------
+    search_fields = ['^name', '=city']
+
+    # -------------------- Ordering Filter --------------------
+    ordering_fields = ['name','roll']
+
+    # -------------------- PageNumberPagination ----------------
+    # pagination_class = PageNumberPagination.  -- Global Pagination
+    pagination_class = MyPageNumberPagination
+
+
