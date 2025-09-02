@@ -26,7 +26,7 @@ from .throttles import AuthTestScopedThrottle
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.pagination import PageNumberPagination
-from .paginations import MyPageNumberPagination
+from .paginations import MyPageNumberPagination, MyLimitOffsetPagination, MyCursorPagination
 # -------------------- Simple Class APIview --------------------
 
 class StudentCRUDAPI(APIView):
@@ -316,8 +316,11 @@ class Filter_StudentListAPI(generics.ListAPIView):
     # -------------------- Ordering Filter --------------------
     ordering_fields = ['name','roll']
 
-    # -------------------- PageNumberPagination ----------------
+    # -------------------- PageNumberPagination --------------------
     # pagination_class = PageNumberPagination.  -- Global Pagination
-    pagination_class = MyPageNumberPagination
+    # pagination_class = MyPageNumberPagination # -- PageNumberPagination
 
+    # pagination_class = MyLimitOffsetPagination   # -- Limit OffSet pagination'
+
+    pagination_class = MyCursorPagination
 
